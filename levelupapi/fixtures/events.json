@@ -1,0 +1,13 @@
+[
+  {
+    "model": "levelupapi.event",
+    "pk": 1,
+    "fields": {
+        "game_id": 1,
+        "description": "Checkers Championship",
+        "date": "2024-05-24",
+        "time": "14:30:59",
+        "organizer_id": 1
+    }
+  }
+]

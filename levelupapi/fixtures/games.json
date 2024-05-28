@@ -1,0 +1,14 @@
+[
+  {
+    "model": "levelupapi.game",
+    "pk": 1,
+    "fields": {
+        "title": "Checkers",
+        "maker": "Hasbro",
+        "number_of_players": "2",
+        "skill_level": "Easy",
+        "gamer_id": 1,
+        "game_type_id": 1
+    }
+}
+]
