@@ -1,12 +1,12 @@
-"""View module for handling requests about game types"""
+"""View module for handling requests about games"""
 from django.http import HttpResponseServerError
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import serializers, status
-from levelupapi.models import GameType
+from levelupapi.models import EventGamer, Event, Gamer
 
 
-class GameTypeView(ViewSet):
+class EventGamerView(ViewSet):
     """Level up game types view"""
 
     def retrieve(self, request, pk):
@@ -16,10 +16,10 @@ class GameTypeView(ViewSet):
             Response -- JSON serialized game type
         """
         try:
-            game_type = GameType.objects.get(pk=pk)
-            serializer = GameTypeSerializer(game_type)
+            event_gamer = EventGamer.objects.get(pk=pk)
+            serializer = EventGamerSerializer(event_gamer)
             return Response(serializer.data)
-        except GameType.DoesNotExist as ex:
+        except EventGamer.DoesNotExist as ex:
             return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
 
     def list(self, request):
@@ -28,34 +28,42 @@ class GameTypeView(ViewSet):
         Returns:
             Response -- JSON serialized list of game types
         """
-        game_types = GameType.objects.all()
-        serializer = GameTypeSerializer(game_types, many=True)
+        event_gamers = EventGamer.objects.all()
+
+        serializer = EventGamerSerializer(event_gamers, many=True)
         return Response(serializer.data)
 
     def create(self, request):
         """Handle POST operations
 
         Returns:
-            Response -- JSON serialized game_type instance
+            Response -- JSON serialized EventGamer instance
         """
-        game_type = GameType.objects.create(
-            label=request.data["label"],
+        event = Event.objects.get(pk=request.data["eventId"])
+        gamer = Gamer.objects.get(pk=request.data["gamerId"])
+
+        event_gamer = EventGamer.objects.create(
+            event=event,
+            gamer=gamer,
         )
-        serializer = GameTypeSerializer(game_type)
+        serializer = EventGamerSerializer(event_gamer)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def update(self, request, pk):
-        """Handle PUT requests for a game type
+        """Handle PUT requests for an eventgamer
 
         Returns:
             Response -- Empty body with 204 status code
         """
         try:
-            game_type = GameType.objects.get(pk=pk)
-            game_type.label = request.data["label"]
-            game_type.save()
+            event_gamer = EventGamer.objects.get(pk=pk)
+            event = Event.objects.get(pk=request.data["eventId"])
+            event_gamer.event = event
+            gamer = Gamer.objects.get(pk=request.data["gamerId"])
+            event_gamer.gamer = gamer
+            event.save()
             return Response(None, status=status.HTTP_204_NO_CONTENT)
-        except GameType.DoesNotExist as ex:
+        except EventGamer.DoesNotExist as ex:
             return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
 
     def destroy(self, request, pk):
@@ -65,15 +73,15 @@ class GameTypeView(ViewSet):
             Response -- Empty body with 204 status code
         """
         try:
-            game_type = GameType.objects.get(pk=pk)
-            game_type.delete()
+            event_gamer = EventGamer.objects.get(pk=pk)
+            event_gamer.delete()
             return Response(None, status=status.HTTP_204_NO_CONTENT)
-        except GameType.DoesNotExist as ex:
+        except EventGamer.DoesNotExist as ex:
             return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
 
 
-class GameTypeSerializer(serializers.ModelSerializer):
+class EventGamerSerializer(serializers.ModelSerializer):
     """JSON serializer for game types"""
     class Meta:
-        model = GameType
-        fields = ('id', 'label')
+        model = EventGamer
+        fields = ('id', 'event_id', 'gamer_id')
