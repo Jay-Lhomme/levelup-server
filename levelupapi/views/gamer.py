@@ -1,12 +1,12 @@
-"""View module for handling requests about game types"""
+"""View module for handling requests about games"""
 from django.http import HttpResponseServerError
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import serializers, status
-from levelupapi.models import GameType
+from levelupapi.models import Gamer
 
 
-class GameTypeView(ViewSet):
+class GamerView(ViewSet):
     """Level up game types view"""
 
     def retrieve(self, request, pk):
@@ -16,10 +16,10 @@ class GameTypeView(ViewSet):
             Response -- JSON serialized game type
         """
         try:
-            game_type = GameType.objects.get(pk=pk)
-            serializer = GameTypeSerializer(game_type)
+            gamer = Gamer.objects.get(pk=pk)
+            serializer = GamerSerializer(gamer)
             return Response(serializer.data)
-        except GameType.DoesNotExist as ex:
+        except Gamer.DoesNotExist as ex:
             return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
 
     def list(self, request):
@@ -28,20 +28,21 @@ class GameTypeView(ViewSet):
         Returns:
             Response -- JSON serialized list of game types
         """
-        game_types = GameType.objects.all()
-        serializer = GameTypeSerializer(game_types, many=True)
+        gamers = Gamer.objects.all()
+        serializer = GamerSerializer(gamers, many=True)
         return Response(serializer.data)
 
     def create(self, request):
         """Handle POST operations
 
         Returns:
-            Response -- JSON serialized game_type instance
+            Response -- JSON serialized gamer instance
         """
-        game_type = GameType.objects.create(
-            label=request.data["label"],
+        gamer = Gamer.objects.create(
+            bio=request.data["bio"],
+            uid=request.data["uid"]
         )
-        serializer = GameTypeSerializer(game_type)
+        serializer = GamerSerializer(gamer)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def update(self, request, pk):
@@ -51,11 +52,12 @@ class GameTypeView(ViewSet):
             Response -- Empty body with 204 status code
         """
         try:
-            game_type = GameType.objects.get(pk=pk)
-            game_type.label = request.data["label"]
-            game_type.save()
+            gamer = Gamer.objects.get(pk=pk)
+            gamer.bio = request.data["bio"]
+            gamer.uid = request.data["uid"]
+            gamer.save()
             return Response(None, status=status.HTTP_204_NO_CONTENT)
-        except GameType.DoesNotExist as ex:
+        except Gamer.DoesNotExist as ex:
             return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
 
     def destroy(self, request, pk):
@@ -65,15 +67,15 @@ class GameTypeView(ViewSet):
             Response -- Empty body with 204 status code
         """
         try:
-            game_type = GameType.objects.get(pk=pk)
-            game_type.delete()
+            gamer = Gamer.objects.get(pk=pk)
+            gamer.delete()
             return Response(None, status=status.HTTP_204_NO_CONTENT)
-        except GameType.DoesNotExist as ex:
+        except Gamer.DoesNotExist as ex:
             return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
 
 
-class GameTypeSerializer(serializers.ModelSerializer):
+class GamerSerializer(serializers.ModelSerializer):
     """JSON serializer for game types"""
     class Meta:
-        model = GameType
-        fields = ('id', 'label')
+        model = Gamer
+        fields = ('id', 'bio', 'uid')

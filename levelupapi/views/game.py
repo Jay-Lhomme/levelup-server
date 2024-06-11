@@ -1,4 +1,4 @@
-"""View module for handling requests about events"""
+"""View module for handling requests about games"""
 from django.http import HttpResponseServerError
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
@@ -10,10 +10,10 @@ class GameView(ViewSet):
     """Level up Games view"""
 
     def retrieve(self, request, pk):
-        """Handle GET requests for single games
+        """Handle GET requests for single game
 
         Returns:
-            Response -- JSON serialized games
+            Response -- JSON serialized game
         """
         try:
             game = Game.objects.get(pk=pk)
@@ -38,53 +38,67 @@ class GameView(ViewSet):
         return Response(serializer.data)
 
     def create(self, request):
-        """Handle POST operations
+        """Handle POST operations for creating a new game
 
-        Returns
+        Returns:
             Response -- JSON serialized game instance
         """
-        gamer = Gamer.objects.get(uid=request.data["userId"])
-        game_type = GameType.objects.get(pk=request.data["gameType"])
+        try:
+            gamer = Gamer.objects.get(uid=request.data["userId"])
+            game_type = GameType.objects.get(pk=request.data["gameType"])
 
-        game = Game.objects.create(
-            title=request.data["title"],
-            maker=request.data["maker"],
-            number_of_players=request.data["numberOfPlayers"],
-            skill_level=request.data["skillLevel"],
-            game_type=game_type,
-            gamer=gamer,
-        )
-        serializer = GameSerializer(game)
-        return Response(serializer.data)
+            game = Game.objects.create(
+                title=request.data["title"],
+                maker=request.data["maker"],
+                number_of_players=request.data["numberOfPlayers"],
+                skill_level=request.data["skillLevel"],
+                game_type=game_type,
+                gamer=gamer,
+            )
+            serializer = GameSerializer(game)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except (Gamer.DoesNotExist, GameType.DoesNotExist) as ex:
+            return Response({'message': ex.args[0]}, status=status.HTTP_400_BAD_REQUEST)
 
     def update(self, request, pk):
-        """Handle PUT requests for a game
+        """Handle PUT requests for updating a game
 
         Returns:
             Response -- Empty body with 204 status code
         """
+        try:
+            game = Game.objects.get(pk=pk)
+            game.title = request.data["title"]
+            game.maker = request.data["maker"]
+            game.number_of_players = request.data["numberOfPlayers"]
+            game.skill_level = request.data["skillLevel"]
 
-        game = Game.objects.get(pk=pk)
-        game.title = request.data["title"]
-        game.maker = request.data["maker"]
-        game.number_of_players = request.data["numberOfPlayers"]
-        game.skill_level = request.data["skillLevel"]
+            gamer = Gamer.objects.get(uid=request.data["userId"])
+            game.gamer = gamer
+            game_type = GameType.objects.get(pk=request.data["gameType"])
+            game.game_type = game_type
+            game.save()
 
-        game_type = GameType.objects.get(pk=request.data["gameType"])
-        game.game_type = game_type
-        game.save()
-
-        return Response(None, status=status.HTTP_204_NO_CONTENT)
+            return Response(None, status=status.HTTP_204_NO_CONTENT)
+        except (Game.DoesNotExist, GameType.DoesNotExist) as ex:
+            return Response({'message': ex.args[0]}, status=status.HTTP_400_BAD_REQUEST)
 
     def destroy(self, request, pk):
-        game = Game.objects.get(pk=pk)
-        game.delete()
-        return Response(None, status=status.HTTP_204_NO_CONTENT)
+        """Handle DELETE requests for a game
+
+        Returns:
+            Response -- Empty body with 204 status code
+        """
+        try:
+            game = Game.objects.get(pk=pk)
+            game.delete()
+            return Response(None, status=status.HTTP_204_NO_CONTENT)
+        except Game.DoesNotExist as ex:
+            return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
 
 
 class GameSerializer(serializers.ModelSerializer):
-    """JSON serializer for games
-    """
+    """JSON serializer for games"""
     class Meta:
         model = Game
         fields = ('id', 'title', 'maker', 'number_of_players',
